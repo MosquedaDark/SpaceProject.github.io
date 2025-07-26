@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>SPACE</title>
+  <link rel="icon" href="icon.ico" type="image/x-icon" />
+  <style>
+    body, html {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    #fondo1, #fondo2 {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: opacity 3s ease;
+      z-index: -1;
+    }
+
+    #fondo1 {
+      background-image: url('fondo.jpg');
+      opacity: 1;
+      z-index: -2;
+    }
+
+    #fondo2 {
+      background-image: url('fondo2.jpg');
+      opacity: 0;
+      z-index: -1;
+    }
+
+    #contenido {
+      position: relative;
+      z-index: 10;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      text-shadow: 2px 2px 5px black;
+      user-select: none;
+      text-align: center;
+    }
+
+    #contador {
+      font-size: 80px;
+    }
+
+    p {
+      font-size: 24px;
+      margin: 0 0 20px 0;
+    }
+
+    /* Botón de mute */
+    #btnMute {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      width: 48px;
+      height: 48px;
+      cursor: pointer;
+      z-index: 20;
+      user-select: none;
+      opacity: 0.8;
+      transition: opacity 0.3s ease;
+      filter: none;
+    }
+    #btnMute:hover {
+      opacity: 1;
+    }
+    #btnMute.muted {
+      filter: grayscale(100%);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="fondo1"></div>
+  <div id="fondo2"></div>
+
+  <img id="btnMute" src="nosound.png" alt="Mute Music" title="Activar / Desactivar música">
+
+  <div id="contenido">
+    <p>Presiona la tecla <strong>Espacio</strong>:</p>
+    <div id="contador">0</div>
+  </div>
+
+  <audio id="musica" src="CHIHIRO_BUT_ITS_LOFI_RE_CHILL_DEA.mp3" loop></audio>
+  <audio id="sonido" src="sonido.mp3"></audio>
+  <audio id="sonido100" src="100.mp3"></audio>
+
+  <script>
+    let contador = 0;
+    let musicaIniciada = false;
+    let musicaActiva = true;
+
+    const contadorElemento = document.getElementById("contador");
+    const sonidoEspacio = document.getElementById("sonido");
+    const sonido100 = document.getElementById("sonido100");
+    const musicaFondo = document.getElementById("musica");
+    const btnMute = document.getElementById("btnMute");
+
+    const fondo1 = document.getElementById("fondo1");
+    const fondo2 = document.getElementById("fondo2");
+    let fondoCambiado = false;
+
+    const fadeDuration = 1500; // ms
+
+    let isPlayingSonido100 = false;
+
+    // Fade out con promesa para esperar
+    function fadeOut(audio, duration) {
+      return new Promise(resolve => {
+        let stepTime = 50;
+        let steps = duration / stepTime;
+        let volumeStep = audio.volume / steps;
+        let currentStep = 0;
+
+        let fadeAudio = setInterval(() => {
+          if (currentStep >= steps) {
+            clearInterval(fadeAudio);
+            audio.volume = 0;
+            audio.pause();
+            resolve();
+          } else {
+            audio.volume = Math.max(0, audio.volume - volumeStep);
+            currentStep++;
+          }
+        }, stepTime);
+      });
+    }
+
+    // Fade in con promesa para esperar
+    function fadeIn(audio, duration, targetVolume=1) {
+      audio.volume = 0;
+      audio.play();
+      return new Promise(resolve => {
+        let stepTime = 50;
+        let steps = duration / stepTime;
+        let volumeStep = targetVolume / steps;
+        let currentStep = 0;
+
+        let fadeAudio = setInterval(() => {
+          if (currentStep >= steps) {
+            clearInterval(fadeAudio);
+            audio.volume = targetVolume;
+            resolve();
+          } else {
+            audio.volume = Math.min(targetVolume, audio.volume + volumeStep);
+            currentStep++;
+          }
+        }, stepTime);
+      });
+    }
+
+    async function toggleMusica() {
+      if (musicaActiva) {
+        await fadeOut(musicaFondo, fadeDuration);
+        musicaActiva = false;
+        btnMute.classList.add("muted");
+      } else {
+        await fadeIn(musicaFondo, fadeDuration);
+        musicaActiva = true;
+        btnMute.classList.remove("muted");
+      }
+    }
+
+    btnMute.addEventListener("click", toggleMusica);
+
+    document.addEventListener("keyup", async function(evento) {
+      if (evento.code === "Space") {
+        if (!musicaIniciada && musicaActiva) {
+          await fadeIn(musicaFondo, fadeDuration);
+          musicaIniciada = true;
+        }
+
+        contador++;
+        contadorElemento.textContent = contador;
+
+        if (contador % 100 === 0) {
+          if (!isPlayingSonido100) {
+            isPlayingSonido100 = true;
+            sonidoEspacio.pause();
+            sonido100.currentTime = 0;
+            sonido100.play();
+            sonido100.onended = () => {
+              isPlayingSonido100 = false;
+            };
+          }
+        } else {
+          if (!isPlayingSonido100) {
+            sonidoEspacio.currentTime = 0;
+            sonidoEspacio.play();
+          }
+        }
+
+        if (contador === 150 && !fondoCambiado) {
+          fondoCambiado = true;
+          fondo1.style.opacity = '0';
+          fondo2.style.opacity = '1';
+        }
+      }
+    });
+  </script>
+</body>
+</html>
