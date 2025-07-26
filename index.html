@@ -2,25 +2,37 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SPACE</title>
-  <link rel="icon" href="icon.ico" type="image/x-icon">
+  <link rel="icon" href="icon.ico" type="image/x-icon" />
   <style>
     body {
       margin: 0;
-      overflow: hidden;
+      height: 100vh;
+      background-image: url('fondo.jpg');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
+      background-attachment: fixed;
       font-family: Arial, sans-serif;
-      color: white;
       text-align: center;
+      color: white;
+      text-shadow: 2px 2px 5px black;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: background-image 1s ease-in-out;
     }
 
-    #counter {
-      font-size: 5em;
-      margin-top: 20vh;
-      text-shadow: 0 0 10px #000;
+    #contador {
+      font-size: 80px;
+      user-select: none;
+    }
+
+    p {
+      font-size: 24px;
+      margin: 0 0 20px 0;
+      user-select: none;
     }
 
     #muteBtn {
@@ -32,101 +44,108 @@
       cursor: pointer;
       opacity: 0.8;
     }
-
-    @media (max-width: 600px) {
-      #counter {
-        font-size: 3em;
-      }
-    }
   </style>
 </head>
 <body>
-  <img id="muteBtn" src="nosound.png" alt="Mute Button" />
-  <div id="counter">0</div>
+  <img id="muteBtn" src="nosound.png" alt="Silenciar" title="Silenciar música">
+  <p>Presiona la tecla <strong>Espacio</strong> o toca la pantalla:</p>
+  <div id="contador">0</div>
 
-  <audio id="bgm" src="CHIHIRO_BUT_ITS_LOFI_RE_CHILL_DEA.mp3" loop></audio>
-  <audio id="ding" src="100.mp3"></audio>
+  <audio id="musica" src="CHIHIRO_BUT_ITS_LOFI_RE_CHILL_DEA.mp3" loop></audio>
+  <audio id="sonido" src="sonido.mp3"></audio>
+  <audio id="sonido100" src="100.mp3"></audio>
 
   <script>
-    const bgm = document.getElementById("bgm");
-    const ding = document.getElementById("ding");
-    const muteBtn = document.getElementById("muteBtn");
-    const counterDiv = document.getElementById("counter");
-    let count = 0;
-    let muted = false;
-    let bgVolume = 1;
+    let contador = 0;
+    let musicaIniciada = false;
+    let musicaFondo = document.getElementById("musica");
+    let contadorElemento = document.getElementById("contador");
+    let sonidoEspacio = document.getElementById("sonido");
+    let sonido100 = document.getElementById("sonido100");
+    let muteBtn = document.getElementById("muteBtn");
 
-    let currentBackground = "fondo.jpg";
-    let nextBackground = "fondo2.jpg";
-    document.body.style.backgroundImage = `url(${currentBackground})`;
-
-    // 🔈 Música de fondo suave
-    function fadeOutMusic() {
-      const fade = setInterval(() => {
-        if (bgVolume > 0.01) {
-          bgVolume -= 0.01;
-          bgm.volume = bgVolume;
+    // Desvanecer volumen al pausar
+    function fadeOut(audio, callback) {
+      let fadeInterval = setInterval(() => {
+        if (audio.volume > 0.05) {
+          audio.volume -= 0.05;
         } else {
-          bgm.volume = 0;
-          bgm.pause();
-          clearInterval(fade);
+          clearInterval(fadeInterval);
+          audio.volume = 0;
+          audio.pause();
+          if (callback) callback();
         }
-      }, 50);
+      }, 100);
     }
 
-    // 🔁 Detectar si ya se inició
-    let musicStarted = false;
+    // Reanudar música con fade-in
+    function fadeIn(audio) {
+      audio.volume = 0;
+      audio.play();
+      let fadeInterval = setInterval(() => {
+        if (audio.volume < 0.95) {
+          audio.volume += 0.05;
+        } else {
+          audio.volume = 1;
+          clearInterval(fadeInterval);
+        }
+      }, 100);
+    }
+
+    // Cambiar fondo al llegar a 150
+    function cambiarFondo() {
+      if (contador === 150) {
+        document.body.style.backgroundImage = "url('fondo2.jpg')";
+      }
+    }
+
+    // Iniciar música si aún no comenzó
     function startMusic() {
-      if (!musicStarted) {
-        bgm.volume = bgVolume;
-        bgm.play();
-        musicStarted = true;
+      if (!musicaIniciada) {
+        fadeIn(musicaFondo);
+        musicaIniciada = true;
       }
     }
 
-    // 🎧 Mute con desvanecimiento
-    muteBtn.addEventListener("click", () => {
-      if (!muted) {
-        fadeOutMusic();
-        muted = true;
-      }
-    });
-
-    // 🔂 Cambio de fondo al llegar a 150
-    function checkBackgroundChange() {
-      if (count === 150) {
-        document.body.style.backgroundImage = `url(${nextBackground})`;
-      }
-    }
-
-    // 🔔 Sonido especial cada 100
-    function playDingIfNeeded() {
-      if (count % 100 === 0) {
-        ding.currentTime = 0;
-        ding.play();
-      }
-    }
-
+    // Acción principal
     function updateCounter() {
-      count++;
-      counterDiv.textContent = count;
-      playDingIfNeeded();
-      checkBackgroundChange();
+      contador++;
+      contadorElemento.textContent = contador;
+      cambiarFondo();
+
+      // Reproducir sonido normal
+      sonidoEspacio.currentTime = 0;
+      sonidoEspacio.play();
+
+      // Si es múltiplo de 100, reproducir sonido especial
+      if (contador % 100 === 0) {
+        sonidoEspacio.pause();
+        sonido100.currentTime = 0;
+        sonido100.play();
+      }
     }
 
-    // 🎮 PC: Espacio
-    document.addEventListener("keydown", (e) => {
+    // Espacio (PC)
+    document.addEventListener("keyup", function(e) {
       if (e.code === "Space") {
-        e.preventDefault();
         startMusic();
         updateCounter();
       }
     });
 
-    // 📱 Teléfono: Toque
-    document.addEventListener("touchstart", (e) => {
+    // Toque (Móvil)
+    document.addEventListener("touchstart", function(e) {
       startMusic();
       updateCounter();
+    });
+
+    // Botón de silencio
+    muteBtn.addEventListener("click", () => {
+      if (!musicaFondo.paused) {
+        fadeOut(musicaFondo);
+      } else {
+        fadeIn(musicaFondo);
+      }
     });
   </script>
 </body>
