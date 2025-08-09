@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>SPACE</title>
+  <title>Space Project</title>
   <link rel="icon" href="icon.ico" type="image/x-icon" />
   <style>
     body {
@@ -22,53 +22,292 @@
       justify-content: center;
       align-items: center;
       transition: background-image 1s ease-in-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #backgroundFade {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('mount-fuji-2305606_1280.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0;
+      pointer-events: none;
+      animation-fill-mode: forwards;
+      z-index: -1;
+    }
+
+    @keyframes fadeBackground {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     #contador {
       font-size: 80px;
       user-select: none;
+      z-index: 10;
+    }
+
+    #emojiSonido {
+      font-size: 50px;
+      margin-bottom: 10px;
+      user-select: none;
+      z-index: 10;
     }
 
     p {
       font-size: 24px;
       margin: 0 0 20px 0;
       user-select: none;
+      z-index: 10;
     }
 
-    #muteBtn {
+    /* Botones estilo */
+    #muteBtn, #soundBtn, #changeMusicBtn {
       position: absolute;
-      top: 10px;
-      left: 10px;
       width: 40px;
       height: 40px;
       cursor: pointer;
       opacity: 0.8;
+      user-select: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px;
+      transition: background 0.3s;
+      z-index: 10;
+    }
+    #muteBtn:hover, #soundBtn:hover, #changeMusicBtn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    #muteBtn {
+      top: 10px;
+      left: 10px;
+    }
+
+    #soundBtn {
+      top: 60px;
+      left: 10px;
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    #changeMusicBtn {
+      top: 10px;
+      left: 60px;
+    }
+
+    /* Menú selector sonidos */
+    #soundMenu {
+      position: absolute;
+      top: 110px;
+      left: 10px;
+      background: rgba(0,0,0,0.6);
+      padding: 5px;
+      border-radius: 5px;
+      display: none;
+      user-select: none;
+      z-index: 10;
+    }
+
+    .soundOption {
+      font-size: 24px;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    .soundOption.selected {
+      background: rgba(255,255,255,0.3);
+      border-radius: 4px;
+    }
+
+    /* Nuevo menú música */
+    #musicMenu {
+      position: absolute;
+      top: 60px;
+      left: 60px;
+      background: rgba(0,0,0,0.7);
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: none;
+      user-select: none;
+      min-width: 160px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.8);
+      animation: fadeUp 0.3s ease forwards;
+      z-index: 100;
+    }
+
+    .musicOption {
+      font-size: 20px;
+      padding: 8px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      color: white;
+      opacity: 0;
+      transform: translateY(15px);
+      animation-fill-mode: forwards;
+      animation-timing-function: ease-out;
+    }
+
+    .musicOption:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Animación fade + subir */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Barra de volumen vertical a la derecha */
+    #volumeControl {
+      position: fixed;
+      top: 50%;
+      right: 5px;
+      transform: translateY(-50%) rotate(-90deg);
+      width: 140px;
+      height: 30px;
+      opacity: 0.7;
+      cursor: pointer;
+      z-index: 150;
+      -webkit-appearance: none;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      outline: none;
+    }
+
+    /* Estilos para thumb con imagen */
+    #volumeControl::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 30px;
+      height: 30px;
+      background: transparent;
+      cursor: pointer;
+      border: none;
+      margin-top: -9px; /* centrar verticalmente */
+      background-image: url('wave-1837426_1280.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      transition: transform 0.2s ease;
+    }
+    #volumeControl::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    #volumeControl::-moz-range-thumb {
+      width: 30px;
+      height: 30px;
+      background: transparent;
+      cursor: pointer;
+      border: none;
+      background-image: url('wave-1837426_1280.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      transition: transform 0.2s ease;
+    }
+    #volumeControl::-moz-range-thumb:hover {
+      transform: scale(1.2);
     }
   </style>
 </head>
 <body>
-  <img id="muteBtn" src="nosound.png" alt="Silenciar" title="Silenciar música">
+  <!-- Fondo para fade -->
+  <div id="backgroundFade"></div>
+
+  <!-- Botón silenciar -->
+  <img id="muteBtn" src="nosound.png" alt="Silenciar" title="Silenciar música" />
+
+  <!-- Botón selector de sonido -->
+  <div id="soundBtn" title="Cambiar sonido">🎹</div>
+
+  <!-- Botón cambio canción -->
+  <div id="changeMusicBtn" title="Cambiar canción de fondo">🎵</div>
+
+  <!-- Menú selector sonidos -->
+  <div id="soundMenu">
+    <div class="soundOption selected" data-sound="normal">🔊</div>
+    <div class="soundOption" data-sound="piano">🎹</div>
+  </div>
+
+  <!-- Menú cambio música -->
+  <div id="musicMenu">
+    <div class="musicOption" data-music="CHIHIRO">CHIHIRO LOFI</div>
+    <div class="musicOption" data-music="CRYSTAL">Crystal Ambient</div>
+  </div>
+
+  <!-- Barra volumen -->
+  <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="1" title="Volumen música" />
+
   <p>Presiona la tecla <strong>Espacio</strong> o toca la pantalla:</p>
+  <div id="emojiSonido">🔊</div>
   <div id="contador">0</div>
 
+  <!-- Audios -->
+  <!-- CHIHIRO LOFI -->
   <audio id="musica" src="CHIHIRO_BUT_ITS_LOFI_RE_CHILL_DEA.mp3" loop></audio>
+
+  <!-- Crystal Ambient -->
+  <audio id="musicaAlterna" src="crystal-ambient-piano-252638.mp3" loop></audio>
+
   <audio id="sonido" src="sonido.mp3"></audio>
   <audio id="sonido100" src="100.mp3"></audio>
+  <audio id="sonidoMi" src="mi-80239.mp3"></audio>
 
   <script>
     let contador = 0;
-    let musicaIniciada = false;
+
+    // Música y estado
     let musicaFondo = document.getElementById("musica");
+    let musicaAlterna = document.getElementById("musicaAlterna");
+    let musicaActual = musicaFondo;
+    let musicaIniciada = false;
+
+    // Controles UI
     let contadorElemento = document.getElementById("contador");
+    let emojiSonido = document.getElementById("emojiSonido");
     let sonidoEspacio = document.getElementById("sonido");
     let sonido100 = document.getElementById("sonido100");
+    let sonidoMi = document.getElementById("sonidoMi");
     let muteBtn = document.getElementById("muteBtn");
+    let soundBtn = document.getElementById("soundBtn");
+    let soundMenu = document.getElementById("soundMenu");
+    let changeMusicBtn = document.getElementById("changeMusicBtn");
+    let musicMenu = document.getElementById("musicMenu");
+    let volumeControl = document.getElementById("volumeControl");
 
-    // Desvanecer volumen al pausar
+    let currentSound = "normal"; // "normal" o "piano"
+
+    // Pitch progresivo piano
+    let pianoPitch = 1.0; 
+    let pianoPitchStep = 0.05; 
+    let pianoPitchMax = 2.0; 
+
+    // FadeOut y FadeIn para música
     function fadeOut(audio, callback) {
       let fadeInterval = setInterval(() => {
         if (audio.volume > 0.05) {
-          audio.volume -= 0.05;
+          audio.volume = Math.max(0, audio.volume - 0.05);
         } else {
           clearInterval(fadeInterval);
           audio.volume = 0;
@@ -78,13 +317,12 @@
       }, 100);
     }
 
-    // Reanudar música con fade-in
     function fadeIn(audio) {
       audio.volume = 0;
       audio.play();
       let fadeInterval = setInterval(() => {
         if (audio.volume < 0.95) {
-          audio.volume += 0.05;
+          audio.volume = Math.min(1, audio.volume + 0.05);
         } else {
           audio.volume = 1;
           clearInterval(fadeInterval);
@@ -92,62 +330,159 @@
       }, 100);
     }
 
-    // Cambiar fondo al llegar a 150
+    // Cambiar fondo al llegar a 150 y 250
     function cambiarFondo() {
       if (contador === 150) {
         document.body.style.backgroundImage = "url('fondo2.jpg')";
+      } else if (contador === 250) {
+        let bgFade = document.getElementById('backgroundFade');
+        bgFade.style.opacity = '0';
+        bgFade.style.animation = 'fadeBackground 2s ease forwards';
       }
     }
 
-    // Iniciar música si aún no comenzó
+    // Iniciar música activa
     function startMusic() {
       if (!musicaIniciada) {
-        fadeIn(musicaFondo);
+        musicaActual.volume = volumeControl.value;
+        musicaActual.play();
+        let fadeInterval = setInterval(() => {
+          if (musicaActual.volume < volumeControl.value - 0.05) {
+            musicaActual.volume = Math.min(volumeControl.value, musicaActual.volume + 0.05);
+          } else {
+            musicaActual.volume = volumeControl.value;
+            clearInterval(fadeInterval);
+          }
+        }, 100);
         musicaIniciada = true;
       }
     }
 
-    // Acción principal
+    // Cambiar canción con fade
+    function cambiarCancion(nuevaMusica) {
+      if (musicaActual === nuevaMusica) return;
+
+      fadeOut(musicaActual, () => {
+        nuevaMusica.volume = 0;
+        nuevaMusica.play();
+        let fadeInInterval = setInterval(() => {
+          if (nuevaMusica.volume < volumeControl.value - 0.05) {
+            nuevaMusica.volume = Math.min(volumeControl.value, nuevaMusica.volume + 0.05);
+          } else {
+            nuevaMusica.volume = volumeControl.value;
+            clearInterval(fadeInInterval);
+          }
+        }, 100);
+        musicaActual = nuevaMusica;
+      });
+    }
+
+    // Acción principal al presionar espacio o tocar
     function updateCounter() {
       contador++;
       contadorElemento.textContent = contador;
       cambiarFondo();
 
-      // Reproducir sonido normal
-      sonidoEspacio.currentTime = 0;
-      sonidoEspacio.play();
+      if (currentSound === "normal") {
+        sonidoEspacio.currentTime = 0;
+        sonidoEspacio.play();
+      } else if (currentSound === "piano") {
+        sonidoMi.currentTime = 0;
+        sonidoMi.playbackRate = pianoPitch;
+        sonidoMi.volume = 0.9;
+        sonidoMi.play();
 
-      // Si es múltiplo de 100, reproducir sonido especial
+        pianoPitch += pianoPitchStep;
+        if (pianoPitch > pianoPitchMax) {
+          pianoPitch = 1.0;
+        }
+      }
+
       if (contador % 100 === 0) {
-        sonidoEspacio.pause();
+        if (currentSound === "normal") sonidoEspacio.pause();
+        if (currentSound === "piano") sonidoMi.pause();
         sonido100.currentTime = 0;
         sonido100.play();
       }
     }
 
-    // Espacio (PC)
-    document.addEventListener("keyup", function(e) {
+    // Eventos teclado y touch
+    document.addEventListener("keyup", (e) => {
       if (e.code === "Space") {
         startMusic();
         updateCounter();
       }
     });
 
-    // Toque (Móvil)
-    document.addEventListener("touchstart", function(e) {
+    document.addEventListener("touchstart", () => {
       startMusic();
       updateCounter();
     });
 
-    // Botón de silencio
+    // Botón mute
     muteBtn.addEventListener("click", () => {
-      if (!musicaFondo.paused) {
-        fadeOut(musicaFondo);
+      if (!musicaActual.paused) fadeOut(musicaActual);
+      else fadeIn(musicaActual);
+    });
+
+    // Mostrar/ocultar menú sonidos
+    soundBtn.addEventListener("click", () => {
+      soundMenu.style.display = soundMenu.style.display === "none" ? "block" : "none";
+    });
+
+    // Seleccionar sonido del piano o normal
+    document.querySelectorAll(".soundOption").forEach(option => {
+      option.addEventListener("click", () => {
+        document.querySelectorAll(".soundOption").forEach(o => o.classList.remove("selected"));
+        option.classList.add("selected");
+        currentSound = option.dataset.sound;
+        emojiSonido.textContent = option.textContent;
+
+        if (currentSound === "piano") {
+          pianoPitch = 1.0;
+        }
+
+        soundMenu.style.display = "none";
+      });
+    });
+
+    // Mostrar/ocultar menú música y animar opciones
+    changeMusicBtn.addEventListener("click", () => {
+      if (musicMenu.style.display === "block") {
+        musicMenu.style.display = "none";
       } else {
-        fadeIn(musicaFondo);
+        musicMenu.style.display = "block";
+        // Animar opciones una por una
+        const opciones = musicMenu.querySelectorAll('.musicOption');
+        opciones.forEach((op, i) => {
+          op.style.animation = `fadeUp 0.3s ease forwards`;
+          op.style.animationDelay = `${i * 0.1}s`;
+          op.style.opacity = '0';
+          op.style.transform = 'translateY(15px)';
+          void op.offsetWidth; // Forzar reflow
+          op.style.opacity = '1';
+          op.style.transform = 'translateY(0)';
+        });
       }
+    });
+
+    // Seleccionar canción de fondo
+    document.querySelectorAll(".musicOption").forEach(option => {
+      option.addEventListener("click", () => {
+        let musicKey = option.dataset.music;
+        if (musicKey === "CHIHIRO") {
+          cambiarCancion(musicaFondo);
+        } else if (musicKey === "CRYSTAL") {
+          cambiarCancion(musicaAlterna);
+        }
+        musicMenu.style.display = "none";
+      });
+    });
+
+    // Control volumen en tiempo real
+    volumeControl.addEventListener("input", () => {
+      musicaActual.volume = volumeControl.value;
     });
   </script>
 </body>
 </html>
-
