@@ -43,8 +43,12 @@
     }
 
     @keyframes fadeBackground {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     #contador {
@@ -225,36 +229,6 @@
     #volumeControl::-moz-range-thumb:hover {
       transform: scale(1.2);
     }
-
-    /* Estilos enemigo */
-    #enemyContainer {
-      position: fixed;
-      bottom: -300px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 200px;
-      height: 250px;
-      background-image: url('el momo.png');
-      background-size: contain;
-      background-repeat: no-repeat;
-      transition: bottom 2s ease;
-      z-index: 120;
-      pointer-events: none;
-    }
-
-    /* Imagen objeción */
-    #objecionImg {
-      position: fixed;
-      top: 40%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 300px;
-      height: auto;
-      display: none;
-      z-index: 130;
-      pointer-events: none;
-      user-select: none;
-    }
   </style>
 </head>
 <body>
@@ -289,10 +263,6 @@
   <div id="emojiSonido">🔊</div>
   <div id="contador">0</div>
 
-  <!-- Enemigo y objeción -->
-  <div id="enemyContainer"></div>
-  <img id="objecionImg" src="objecion.png" alt="Objeción" />
-
   <!-- Audios -->
   <!-- CHIHIRO LOFI -->
   <audio id="musica" src="CHIHIRO_BUT_ITS_LOFI_RE_CHILL_DEA.mp3" loop></audio>
@@ -304,362 +274,215 @@
   <audio id="sonido100" src="100.mp3"></audio>
   <audio id="sonidoMi" src="mi-80239.mp3"></audio>
 
-  <!-- Audios evento enemigo -->
-  <audio id="audioMinecraft" src="Minecraft.mp3"></audio>
-  <audio id="audioMalardo" src="malardo.mp3"></audio>
+  <script>
+    let contador = 0;
 
-<script>
-  let contador = 0;
+    // Música y estado
+    let musicaFondo = document.getElementById("musica");
+    let musicaAlterna = document.getElementById("musicaAlterna");
+    let musicaActual = musicaFondo;
+    let musicaIniciada = false;
 
-  // Música y estado
-  let musicaFondo = document.getElementById("musica");
-  let musicaAlterna = document.getElementById("musicaAlterna");
-  let musicaActual = musicaFondo;
-  let musicaIniciada = false;
+    // Controles UI
+    let contadorElemento = document.getElementById("contador");
+    let emojiSonido = document.getElementById("emojiSonido");
+    let sonidoEspacio = document.getElementById("sonido");
+    let sonido100 = document.getElementById("sonido100");
+    let sonidoMi = document.getElementById("sonidoMi");
+    let muteBtn = document.getElementById("muteBtn");
+    let soundBtn = document.getElementById("soundBtn");
+    let soundMenu = document.getElementById("soundMenu");
+    let changeMusicBtn = document.getElementById("changeMusicBtn");
+    let musicMenu = document.getElementById("musicMenu");
+    let volumeControl = document.getElementById("volumeControl");
 
-  // Controles UI
-  let contadorElemento = document.getElementById("contador");
-  let emojiSonido = document.getElementById("emojiSonido");
-  let sonidoEspacio = document.getElementById("sonido");
-  let sonido100 = document.getElementById("sonido100");
-  let sonidoMi = document.getElementById("sonidoMi");
-  let muteBtn = document.getElementById("muteBtn");
-  let soundBtn = document.getElementById("soundBtn");
-  let soundMenu = document.getElementById("soundMenu");
-  let changeMusicBtn = document.getElementById("changeMusicBtn");
-  let musicMenu = document.getElementById("musicMenu");
-  let volumeControl = document.getElementById("volumeControl");
+    let currentSound = "normal"; // "normal" o "piano"
 
-  let currentSound = "normal"; // "normal" o "piano"
+    // Pitch progresivo piano
+    let pianoPitch = 1.0; 
+    let pianoPitchStep = 0.05; 
+    let pianoPitchMax = 2.0; 
 
-  // Pitch progresivo piano
-  let pianoPitch = 1.0; 
-  let pianoPitchStep = 0.05; 
-  let pianoPitchMax = 2.0; 
-
-  // Audios evento enemigo
-  let audioMinecraft = document.getElementById("audioMinecraft");
-  let audioMalardo = document.getElementById("audioMalardo");
-
-  // FadeOut y FadeIn para música
-  function fadeOut(audio, callback) {
-    let fadeInterval = setInterval(() => {
-      if (audio.volume > 0.05) {
-        audio.volume = Math.max(0, audio.volume - 0.05);
-      } else {
-        clearInterval(fadeInterval);
-        audio.volume = 0;
-        audio.pause();
-        if (callback) callback();
-      }
-    }, 100);
-  }
-
-  function fadeIn(audio) {
-    audio.volume = 0;
-    audio.play();
-    let fadeInterval = setInterval(() => {
-      if (audio.volume < volumeControl.value - 0.05) {
-        audio.volume = Math.min(volumeControl.value, audio.volume + 0.05);
-      } else {
-        audio.volume = volumeControl.value;
-        clearInterval(fadeInterval);
-      }
-    }, 100);
-  }
-
-  // Cambiar fondo al llegar a 150 y 250
-  function cambiarFondo() {
-    if (contador === 150) {
-      document.body.style.backgroundImage = "url('fondo2.jpg')";
-    } else if (contador === 250) {
-      let bgFade = document.getElementById('backgroundFade');
-      bgFade.style.opacity = '0';
-      bgFade.style.animation = 'fadeBackground 2s ease forwards';
-    }
-  }
-
-  // Iniciar música activa
-  function startMusic() {
-    if (!musicaIniciada) {
-      musicaActual.volume = volumeControl.value;
-      musicaActual.play();
+    // FadeOut y FadeIn para música
+    function fadeOut(audio, callback) {
       let fadeInterval = setInterval(() => {
-        if (musicaActual.volume < volumeControl.value - 0.05) {
-          musicaActual.volume = Math.min(volumeControl.value, musicaActual.volume + 0.05);
+        if (audio.volume > 0.05) {
+          audio.volume = Math.max(0, audio.volume - 0.05);
         } else {
-          musicaActual.volume = volumeControl.value;
+          clearInterval(fadeInterval);
+          audio.volume = 0;
+          audio.pause();
+          if (callback) callback();
+        }
+      }, 100);
+    }
+
+    function fadeIn(audio) {
+      audio.volume = 0;
+      audio.play();
+      let fadeInterval = setInterval(() => {
+        if (audio.volume < 0.95) {
+          audio.volume = Math.min(1, audio.volume + 0.05);
+        } else {
+          audio.volume = 1;
           clearInterval(fadeInterval);
         }
       }, 100);
-      musicaIniciada = true;
     }
-  }
 
-  // Cambiar canción con fade
-  function cambiarCancion(nuevaMusica) {
-    if (musicaActual === nuevaMusica) return;
+    // Cambiar fondo al llegar a 150 y 250
+    function cambiarFondo() {
+      if (contador === 150) {
+        document.body.style.backgroundImage = "url('fondo2.jpg')";
+      } else if (contador === 250) {
+        let bgFade = document.getElementById('backgroundFade');
+        bgFade.style.opacity = '0';
+        bgFade.style.animation = 'fadeBackground 2s ease forwards';
+      }
+    }
 
-    fadeOut(musicaActual, () => {
-      nuevaMusica.volume = 0;
-      nuevaMusica.play();
-      let fadeInInterval = setInterval(() => {
-        if (nuevaMusica.volume < volumeControl.value - 0.05) {
-          nuevaMusica.volume = Math.min(volumeControl.value, nuevaMusica.volume + 0.05);
-        } else {
-          nuevaMusica.volume = volumeControl.value;
-          clearInterval(fadeInInterval);
+    // Iniciar música activa
+    function startMusic() {
+      if (!musicaIniciada) {
+        musicaActual.volume = volumeControl.value;
+        musicaActual.play();
+        let fadeInterval = setInterval(() => {
+          if (musicaActual.volume < volumeControl.value - 0.05) {
+            musicaActual.volume = Math.min(volumeControl.value, musicaActual.volume + 0.05);
+          } else {
+            musicaActual.volume = volumeControl.value;
+            clearInterval(fadeInterval);
+          }
+        }, 100);
+        musicaIniciada = true;
+      }
+    }
+
+    // Cambiar canción con fade
+    function cambiarCancion(nuevaMusica) {
+      if (musicaActual === nuevaMusica) return;
+
+      fadeOut(musicaActual, () => {
+        nuevaMusica.volume = 0;
+        nuevaMusica.play();
+        let fadeInInterval = setInterval(() => {
+          if (nuevaMusica.volume < volumeControl.value - 0.05) {
+            nuevaMusica.volume = Math.min(volumeControl.value, nuevaMusica.volume + 0.05);
+          } else {
+            nuevaMusica.volume = volumeControl.value;
+            clearInterval(fadeInInterval);
+          }
+        }, 100);
+        musicaActual = nuevaMusica;
+      });
+    }
+
+    // Acción principal al presionar espacio o tocar
+    function updateCounter() {
+      contador++;
+      contadorElemento.textContent = contador;
+      cambiarFondo();
+
+      if (currentSound === "normal") {
+        sonidoEspacio.currentTime = 0;
+        sonidoEspacio.play();
+      } else if (currentSound === "piano") {
+        sonidoMi.currentTime = 0;
+        sonidoMi.playbackRate = pianoPitch;
+        sonidoMi.volume = 0.9;
+        sonidoMi.play();
+
+        pianoPitch += pianoPitchStep;
+        if (pianoPitch > pianoPitchMax) {
+          pianoPitch = 1.0;
         }
-      }, 100);
-      musicaActual = nuevaMusica;
-    });
-  }
+      }
 
-  // Variables para enemigo y objeción
-  let enemyContainer = document.getElementById('enemyContainer');
-  let objecionImg = document.getElementById('objecionImg');
-
-  let contadorParado = false;
-  let objecionActiva = false;
-  let objecionStartTime;
-
-  // Variables evento disparo enemigo
-  let disparoEsperadoInicio = 7035; // ms desde que empezó audio (7.035 s)
-  let disparoEsperadoFin = 8035;    // ms (8.035 s)
-  let disparoExitoso = false;
-  let disparoTimeout;
-
-  // Acción principal al presionar espacio o tocar
-  function updateCounter() {
-    if (contadorParado) return; // Detener contador mientras parado
-
-    contador++;
-    contadorElemento.textContent = contador;
-    cambiarFondo();
-
-    if (contador === 300) {
-      iniciarEncuentroEnemigo();
-      return;
-    }
-
-    if (currentSound === "normal") {
-      sonidoEspacio.currentTime = 0;
-      sonidoEspacio.play();
-    } else if (currentSound === "piano") {
-      sonidoMi.currentTime = 0;
-      sonidoMi.playbackRate = pianoPitch;
-      sonidoMi.volume = 0.9;
-      sonidoMi.play();
-
-      pianoPitch += pianoPitchStep;
-      if (pianoPitch > pianoPitchMax) {
-        pianoPitch = 1.0;
+      if (contador % 100 === 0) {
+        if (currentSound === "normal") sonidoEspacio.pause();
+        if (currentSound === "piano") sonidoMi.pause();
+        sonido100.currentTime = 0;
+        sonido100.play();
       }
     }
 
-    if (contador % 100 === 0) {
-      if (currentSound === "normal") sonidoEspacio.pause();
-      if (currentSound === "piano") sonidoMi.pause();
-      sonido100.currentTime = 0;
-      sonido100.play();
-    }
-  }
-
-  // Iniciar encuentro enemigo
-  function iniciarEncuentroEnemigo() {
-    contadorParado = true;
-    disparoExitoso = false;
-
-    // Mostrar enemigo con animación subida
-    enemyContainer.style.transition = "bottom 2s ease";
-    enemyContainer.style.bottom = '20px';
-
-    // Reproducir audio Minecraft
-    audioMinecraft.currentTime = 0;
-    audioMinecraft.volume = 1;
-    audioMinecraft.play();
-
-    // Mostrar objecion después de 5 segundos de subida enemigo
-    setTimeout(() => {
-      mostrarObjecion();
-    }, 5000);
-
-    // Timeout para fallo si no disparas en la ventana correcta
-    disparoTimeout = setTimeout(() => {
-      if (!disparoExitoso) {
-        objecionActiva = false;
-        objecionImg.style.display = 'none';
-        contadorParado = false; // Permitir seguir jugando si falla
-      }
-    }, disparoEsperadoFin + 500); // Esperar hasta un poco después del fin
-
-    // Reset objecion en caso que audio acabe antes
-    audioMinecraft.onended = () => {
-      if (!disparoExitoso) {
-        objecionActiva = false;
-        objecionImg.style.display = 'none';
-        contadorParado = false;
-      }
-    };
-  }
-
-  // Mostrar objecion y activar ventana para disparo
-  function mostrarObjecion() {
-    objecionActiva = true;
-    objecionStartTime = Date.now();
-    objecionImg.style.display = 'block';
-  }
-
-  // Animación caída enemigo y audio malardo
-  function animacionCaidaEnemigo() {
-    enemyContainer.style.transition = "bottom 1s ease";
-    enemyContainer.style.bottom = "-300px";
-
-    audioMalardo.currentTime = 0;
-    audioMalardo.play();
-
-    // Al terminar animación, reactivar contador
-    setTimeout(() => {
-      enemyContainer.style.transition = "";
-      contadorParado = false;
-    }, 1000);
-  }
-
-  // Detectar si es dispositivo táctil
-  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-  // Evento tecla espacio para PC y teclado
-  document.addEventListener("keyup", (e) => {
-    if (e.code === "Space") {
-      if (!musicaIniciada) startMusic();
-
-      if (objecionActiva) {
-        let tiempoActualAudio = audioMinecraft.currentTime * 1000; // ms
-
-        if (tiempoActualAudio >= disparoEsperadoInicio && tiempoActualAudio <= disparoEsperadoFin) {
-          disparoExitoso = true;
-          objecionActiva = false;
-          objecionImg.style.display = 'none';
-          clearTimeout(disparoTimeout);
-
-          // Sumar 100 puntos por eliminar enemigo
-          contador += 100;
-          contadorElemento.textContent = contador;
-
-          animacionCaidaEnemigo();
-
-          audioMinecraft.pause();
-
-          cambiarCancion(musicaAlterna);
-          musicaIniciada = true;
-        }
-      } else {
-        updateCounter();
-      }
-    }
-  });
-
-  // Evento click solo si es dispositivo táctil (móvil/tablet)
-  if (isTouchDevice) {
-    document.addEventListener("click", () => {
-      if (!musicaIniciada) startMusic();
-
-      if (objecionActiva) {
-        let tiempoActualAudio = audioMinecraft.currentTime * 1000; // ms
-
-        if (tiempoActualAudio >= disparoEsperadoInicio && tiempoActualAudio <= disparoEsperadoFin) {
-          disparoExitoso = true;
-          objecionActiva = false;
-          objecionImg.style.display = 'none';
-          clearTimeout(disparoTimeout);
-
-          // Sumar 100 puntos por eliminar enemigo
-          contador += 100;
-          contadorElemento.textContent = contador;
-
-          animacionCaidaEnemigo();
-
-          audioMinecraft.pause();
-
-          cambiarCancion(musicaAlterna);
-          musicaIniciada = true;
-        }
-      } else {
+    // Eventos teclado y touch
+    document.addEventListener("keyup", (e) => {
+      if (e.code === "Space") {
+        startMusic();
         updateCounter();
       }
     });
-  }
 
-  // Botón mute toggle
-  muteBtn.addEventListener('click', () => {
-    if (musicaActual.volume > 0) {
-      musicaActual.volume = 0;
-      muteBtn.src = 'sound.png';
-      emojiSonido.textContent = '🔈';
-    } else {
+    document.addEventListener("touchstart", () => {
+      startMusic();
+      updateCounter();
+    });
+
+    // Botón mute
+    muteBtn.addEventListener("click", () => {
+      if (!musicaActual.paused) fadeOut(musicaActual);
+      else fadeIn(musicaActual);
+    });
+
+    // Mostrar/ocultar menú sonidos
+    soundBtn.addEventListener("click", () => {
+      soundMenu.style.display = soundMenu.style.display === "none" ? "block" : "none";
+    });
+
+    // Seleccionar sonido del piano o normal
+    document.querySelectorAll(".soundOption").forEach(option => {
+      option.addEventListener("click", () => {
+        document.querySelectorAll(".soundOption").forEach(o => o.classList.remove("selected"));
+        option.classList.add("selected");
+        currentSound = option.dataset.sound;
+        emojiSonido.textContent = option.textContent;
+
+        if (currentSound === "piano") {
+          pianoPitch = 1.0;
+        }
+
+        soundMenu.style.display = "none";
+      });
+    });
+
+    // Mostrar/ocultar menú música y animar opciones
+    changeMusicBtn.addEventListener("click", () => {
+      if (musicMenu.style.display === "block") {
+        musicMenu.style.display = "none";
+      } else {
+        musicMenu.style.display = "block";
+        // Animar opciones una por una
+        const opciones = musicMenu.querySelectorAll('.musicOption');
+        opciones.forEach((op, i) => {
+          op.style.animation = `fadeUp 0.3s ease forwards`;
+          op.style.animationDelay = `${i * 0.1}s`;
+          op.style.opacity = '0';
+          op.style.transform = 'translateY(15px)';
+          void op.offsetWidth; // Forzar reflow
+          op.style.opacity = '1';
+          op.style.transform = 'translateY(0)';
+        });
+      }
+    });
+
+    // Seleccionar canción de fondo
+    document.querySelectorAll(".musicOption").forEach(option => {
+      option.addEventListener("click", () => {
+        let musicKey = option.dataset.music;
+        if (musicKey === "CHIHIRO") {
+          cambiarCancion(musicaFondo);
+        } else if (musicKey === "CRYSTAL") {
+          cambiarCancion(musicaAlterna);
+        }
+        musicMenu.style.display = "none";
+      });
+    });
+
+    // Control volumen en tiempo real
+    volumeControl.addEventListener("input", () => {
       musicaActual.volume = volumeControl.value;
-      muteBtn.src = 'nosound.png';
-      emojiSonido.textContent = '🔊';
-    }
-  });
-
-  // Mostrar u ocultar menú selector sonido
-  soundBtn.addEventListener('click', () => {
-    if (soundMenu.style.display === 'block') {
-      soundMenu.style.display = 'none';
-    } else {
-      soundMenu.style.display = 'block';
-      musicMenu.style.display = 'none'; // Cerrar menú música si está abierto
-    }
-  });
-
-  // Elegir sonido normal o piano
-  soundMenu.querySelectorAll('.soundOption').forEach(option => {
-    option.addEventListener('click', () => {
-      currentSound = option.getAttribute('data-sound');
-      soundMenu.querySelectorAll('.soundOption').forEach(opt => opt.classList.remove('selected'));
-      option.classList.add('selected');
-      soundMenu.style.display = 'none';
     });
-  });
-
-  // Mostrar u ocultar menú música
-  changeMusicBtn.addEventListener('click', () => {
-    if (musicMenu.style.display === 'block') {
-      musicMenu.style.display = 'none';
-    } else {
-      musicMenu.style.display = 'block';
-      soundMenu.style.display = 'none'; // Cerrar menú sonido si está abierto
-    }
-  });
-
-  // Selección de música
-  musicMenu.querySelectorAll('.musicOption').forEach(option => {
-    option.addEventListener('click', () => {
-      let selectedMusic = option.getAttribute('data-music');
-      if (selectedMusic === "CHIHIRO") {
-        cambiarCancion(musicaFondo);
-      } else if (selectedMusic === "CRYSTAL") {
-        cambiarCancion(musicaAlterna);
-      }
-      musicMenu.style.display = 'none';
-    });
-  });
-
-  // Control volumen
-  volumeControl.addEventListener('input', () => {
-    musicaActual.volume = volumeControl.value;
-  });
-
-  // Para evitar que toque accidental cierre menú
-  document.body.addEventListener('click', (e) => {
-    if (!soundBtn.contains(e.target) && !soundMenu.contains(e.target)) {
-      soundMenu.style.display = 'none';
-    }
-    if (!changeMusicBtn.contains(e.target) && !musicMenu.contains(e.target)) {
-      musicMenu.style.display = 'none';
-    }
-  });
-</script>
+  </script>
 </body>
 </html>
